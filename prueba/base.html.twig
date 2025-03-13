@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Champion Calendar{% endblock %}</title>
+    <!-- Incluye Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* Gradiente de fondo para el body */
+        body {
+            background: #659999;  /* fallback para navegadores antiguos */
+            background: -webkit-linear-gradient(to right, #f4791f, #659999);
+            background: linear-gradient(to right, #f4791f, #659999);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    {% if usuario is defined %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <!-- Alinear Champion Calendar al centro -->
+            <a class="navbar-brand mx-auto" href="#">Champion Calendar</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <!-- Alinear usuario y logout a la izquierda -->
+                <form action="/" method="POST" class="d-flex ms-auto">
+                    <span class="navbar-text me-3">Bienvenido, {{ usuario }}</span>
+                    <button type="submit" name="logout" value="true" class="btn btn-danger">Cerrar sesión</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Contenido principal -->
+    <div class="container mt-4">
+        {% block content %}
+        <h1 class="text-center my-4">Equipos Disponibles</h1>
+
+        <div class="table-responsive">
+            <table class="table table-striped bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Equipo</th>
+                        <th>Información</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for equipo in equipos %}
+                        <tr>
+                            <td>{{ equipo.nombre }}</td>
+                            <td><a href="/equipos/{{ equipo.id }}" class="btn btn-info">Ver Detalles</a></td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center">No hay equipos disponibles</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endblock %}
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Agregar Nuevo Equipo{% endblock %}
+
+{% block content %}
+<h1 class="text-center">Agregar Nuevo Equipo</h1>
+
+<form action="/agregarEquipo" method="POST" class="mt-4">
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre del Equipo</label>
+        <input type="text" class="form-control" id="nombre" name="nombre" required>
+    </div>
+    <div class="mb-3">
+        <label for="url_perfil" class="form-label">URL de Perfil</label>
+        <input type="url" class="form-control" id="url_perfil" name="url_perfil" required>
+    </div>
+    <div class="mb-3">
+        <label for="estadio" class="form-label">Estadio</label>
+        <input type="text" class="form-control" id="estadio" name="estadio" required>
+    </div>
+    <div class="mb-3">
+        <label for="pais" class="form-label">País</label>
+        <input type="text" class="form-control" id="pais" name="pais" required>
+    </div>
+    <div class="mb-3">
+        <label for="flashscore_id" class="form-label">ID de Flashscore</label>
+        <input type="text" class="form-control" id="flashscore_id" name="flashscore_id" required>
+    </div>
+    <div class="mb-3">
+        <label for="url_imagen" class="form-label">URL de Imagen</label>
+        <input type="url" class="form-control" id="url_imagen" name="url_imagen" required>
+    </div>
+    <div class="mb-3">
+        <label for="latitud" class="form-label">Latitud</label>
+        <input type="number" class="form-control" id="latitud" name="latitud" step="any" required>
+    </div>
+    <div class="mb-3">
+        <label for="longitud" class="form-label">Longitud</label>
+        <input type="number" class="form-control" id="longitud" name="longitud" step="any" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Agregar Equipo</button>
+</form>
+
+{% endblock %}

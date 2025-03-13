@@ -1,0 +1,20 @@
+{
+    "name": "ctapasco/champion-calendar.local",
+    "description": "Proyecto champion Calendar",
+    "autoload": {
+        "psr-4": {
+            "Ctapasco\\ChampionCalendarLocal\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "ctapazco",
+            "email": "ctapasco907@gmail.com"
+        }
+    ],
+    "require": {
+         "twig/twig": "^3.0",
+        "firebase/php-jwt": "^6.11",
+        "vlucas/phpdotenv": "^5.6"
+    }
+}

@@ -1,0 +1,200 @@
+crear tabla con nombre del estadio, ciudad, y pais
+crear un nuevo scraping con esta informacion
+modificar la tarjeta de la plantilla de equipos para que el menu se adapte
+
+crear tabla jugadores con edad, dorsal, min, goles, asistencias , tarjetas amarillas, tarjetas roja
+tendriamos que crear otra pagina temple para la plantilla de cada equipo
+
+
+añadir link de cada plantilla
+https://chatgpt.com/c/67aa0e89-5c70-800f-9c13-efea5ec95f71
+
+a la url del equipo de la tabla url_perfil le añada /squad/
+para obetener los datos de la plantilla
+
+
+
+<?php
+// Habilitar la visualización de errores para depurar (opcional)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Incluir el autoload de Composer (asegúrate de que la ruta sea correcta)
+require_once __DIR__ . '/../vendor/autoload.php';
+
+// Configura Twig
+$loader = new \Twig\Loader\FilesystemLoader(__DIR__ . '/../temples'); // Asegúrate de tener la ruta correcta
+$twig = new \Twig\Environment($loader, [
+    'cache' => false, // Desactiva la caché de Twig mientras depuras
+    'debug' => true,
+]);
+
+// Configuración de la base de datos
+$host = 'localhost';
+$user = 'ctapasco';
+$password = 'admin123.';
+$dbname = 'calendarioFut';
+
+// Conexión a la base de datos
+$conexion = new mysqli($host, $user, $password, $dbname);
+
+// Verifica la conexión a la base de datos
+if ($conexion->connect_error) {
+    die("Conexión fallida: " . $conexion->connect_error);  // Si hay error, termina el script
+}
+
+// Función para obtener los equipos desde la base de datos
+function obtenerEquipos($conexion) {
+    $sql = "SELECT * FROM equipos"; // Cambia 'equipos' por el nombre correcto de tu tabla de equipos
+    $result = $conexion->query($sql);
+
+    if ($result->num_rows > 0) {
+        $equipos = [];
+        while ($row = $result->fetch_assoc()) {
+            $equipos[] = $row; // Almacena los equipos en un array
+        }
+        return $equipos;
+    } else {
+        return []; // Si no hay equipos, retorna un array vacío
+    }
+}
+
+// Función para obtener los partidos de un equipo específico con los nombres de los equipos
+function obtenerPartidosPorEquipo($conexion, $equipoId) {
+    // Consulta para obtener los partidos con los nombres de los equipos involucrados
+    $sql = "
+        SELECT 
+            e.id AS encuentro_id,
+            e.fecha, 
+            e.hora, 
+            el.nombre AS equipo_local, 
+            ev.nombre AS equipo_visitante, 
+            e.resultado_local, 
+            e.resultado_visitante
+        FROM encuentros e
+        LEFT JOIN equipos el ON e.equipo_local_id = el.id
+        LEFT JOIN equipos ev ON e.equipo_visitante_id = ev.id
+        WHERE e.equipo_local_id = ? OR e.equipo_visitante_id = ?;
+    "; 
+
+    $stmt = $conexion->prepare($sql);
+    $stmt->bind_param("ii", $equipoId, $equipoId);  // El equipo puede ser local o visitante
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $partidos = [];
+    while ($row = $result->fetch_assoc()) {
+        $partidos[] = $row;  // Almacenar cada partido en el array
+    }
+
+    return $partidos;
+}
+
+// Función para autenticar usuario
+function autenticarUsuario($conexion, $usuario, $clave) {
+    $sql = "SELECT * FROM usuarios WHERE usuario = ? AND clave = ?";
+    $stmt = $conexion->prepare($sql);
+    $stmt->bind_param("ss", $usuario, $clave);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc(); // Devuelve el usuario si encuentra coincidencia
+}
+
+// Iniciar sesión
+session_start();  // Iniciar la sesión al principio del archivo PHP
+
+// Verificar si ya hay un usuario logueado
+$usuarioLogueado = isset($_SESSION['usuario']);
+
+// Obtener los equipos desde la base de datos solo si el usuario está logueado
+$equipos = $usuarioLogueado ? obtenerEquipos($conexion) : [];
+
+// Procesar el login si el usuario no está logueado
+if (!$usuarioLogueado && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['clave'])) {
+    $usuario = $_POST['usuario'];
+    $clave = $_POST['clave'];
+
+    // Autenticar al usuario
+    $usuarioAutenticado = autenticarUsuario($conexion, $usuario, $clave);
+    if ($usuarioAutenticado) {
+        $_SESSION['usuario'] = $usuarioAutenticado['usuario'];  // Guardar el usuario en la sesión
+        header("Location: /");  // Redirigir a la página principal después del login
+        exit();
+    } else {
+        echo "Usuario o contraseña incorrectos.";  // Si no es exitoso, mostrar error
+    }
+}
+
+// Rutas y renderizado
+$requestUri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/'); 
+
+// Si el usuario no ha iniciado sesión, mostrar el login
+if (!$usuarioLogueado) {
+    echo $twig->render('login.html.twig'); // Renderizar la plantilla de login
+    exit();
+}
+
+// Si el usuario está autenticado, mostrar la página principal
+if ($requestUri === '' || $requestUri === 'index.php' || $requestUri === '/' || $requestUri === 'home') {
+    echo $twig->render('base.html.twig', [
+        'usuario' => $_SESSION['usuario'],  // Pasar el nombre del usuario logueado
+        'equipos' => $equipos
+    ]);
+} elseif ($requestUri === 'equipos') {
+    // Redirigir al primer equipo de la lista cuando se accede a /equipos
+    if (!empty($equipos)) {
+        $equipoPorDefecto = $equipos[0]; // Tomar el primer equipo
+        header("Location: /equipos/{$equipoPorDefecto['id']}");
+        exit(); // Detener el script después de la redirección
+    } else {
+        echo 'No hay equipos disponibles.';
+    }
+} elseif (preg_match('/^equipos\/(\d+)$/', $requestUri, $matches)) {
+    // Página de detalles de un equipo
+    $equipoId = (int)$matches[1]; // Obtener el ID del equipo desde la URL
+    
+    // Encuentra el equipo por su ID
+    $equipo = null;
+    foreach ($equipos as $e) {
+        if ($e['id'] == $equipoId) {
+            $equipo = $e;
+            break;
+        }
+    }
+
+    if ($equipo) {
+        // Obtener los partidos del equipo
+        $partidos = obtenerPartidosPorEquipo($conexion, $equipoId);
+
+        // Mostrar la plantilla de detalles del equipo
+        echo $twig->render('plantillaEquipo.html.twig', [
+            'equipo' => $equipo,
+            'partidos' => $partidos
+        ]);
+    } else {
+        echo 'Equipo no encontrado.';
+    }
+} else {
+    // Página no encontrada
+    echo 'Página no encontrada.';
+}
+
+// Cerrar la conexión a la base de datos
+$conexion->close();
+?>
+
+
+
+//pendientes
+
+Me falta configurar registor con la base de datos
+luego comprobar el inicio de sesion
+luego que redirecione del inicio de secion a la base
+
+
+4-marzo-2025
+
+falta la pagina de login inicie seseion con los datos del usuario
+me redireccione a base
+averiguar cual es la ruta de base.html.twig

@@ -1,0 +1,79 @@
+{% extends "base.html.twig" %}
+{% set isLoginPage = true %}
+
+{% block title %}Login - Champion Calendar{% endblock %}
+
+{% block content %}
+<!-- Fondo de fútbol con imagen de fondo y sin desenfoque -->
+<div class="container-fluid d-flex justify-content-center align-items-center vh-100" 
+    style="background-image: url('/imagenes/futbol_fondo.jpg'); background-size: 200% 200%; background-position: center; position: relative;">
+
+    <!-- Fondo oscuro con opacidad para el área del login -->
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1;"></div>
+
+    <!-- Logo y título centrado, sin estar dentro de la caja -->
+    <div class="text-center" style="z-index: 2;">
+        <img src="/assets/css/imagenes/login1.jpg" alt="Champion Calendar" 
+            style="width: 250px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7); animation: fadeIn 1s ease;">
+        <h1 class="text-light mt-4" style="font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 3rem; text-shadow: 4px 4px 8px rgba(0,0,0,0.8); animation: slideIn 1s ease;">
+            FutCalendar
+        </h1>
+    </div>
+    
+    <!-- Card para el formulario de login con borde redondeado y fondo oscuro -->
+    <div class="card p-4 shadow-lg rounded" style="max-width: 450px; background-color: rgba(0, 0, 0, 0.8); z-index: 2; animation: fadeIn 1.5s ease; margin-top: 30px; margin-left: 30px">
+        
+        <h2 class="text-center text-light mb-4" style="font-family: 'Roboto', sans-serif; font-weight: bold;">Iniciar Sesión</h2>
+        
+        <!-- Mensaje de error, si hay alguno -->
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        
+        <!-- Formulario de login con campos estilizados -->
+        <form method="post" action="login.php">
+            <div class="mb-3">
+                <label for="username" class="form-label text-light" style="font-weight: bold;">Usuario</label>
+                <input type="text" class="form-control border-0 rounded-0" id="username" name="username" required placeholder="Introduce tu usuario" style="background-color: rgba(255, 255, 255, 0.7); color: #333;">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label text-light" style="font-weight: bold;">Contraseña</label>
+                <input type="password" class="form-control border-0 rounded-0" id="password" name="password" required placeholder="Introduce tu contraseña" style="background-color: rgba(255, 255, 255, 0.7); color: #333;">
+            </div>
+            <button type="submit" class="btn btn-success w-100 mt-3" style="font-weight: bold; background-color: #28a745; border: none; transition: background-color 0.3s;">
+                Ingresar
+            </button>
+        </form>
+        
+        <!-- Enlace para registrarse con estilo llamativo -->
+        <div class="text-center mt-3">
+            <a href="registro.php" class="text-light" style="text-decoration: underline;">¿No tienes una cuenta? Regístrate</a>
+        </div>
+    </div>
+</div>
+
+
+<!-- Estilos para las animaciones -->
+<style>
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideIn {
+        0% {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style>
+
+{% endblock %}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Equipo - Champion Calendar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Fondo de la página con un degradado diferente */
+        body {
+            background: linear-gradient(to right, #f79c42, #6a11cb);
+            color: white;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Card centrada */
+        .form-card {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px; /* Aumentado para un formulario más amplio */
+            opacity: 0;  /* Inicialmente invisible para la animación */
+            animation: fadeIn 1s forwards;  /* Animación al cargar */
+        }
+
+        /* Título */
+        .form-card h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-align: center;
+        }
+
+        /* Estilo de los inputs */
+        .form-control {
+            border-radius: 25px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* Color de los labels */
+        .form-label {
+            color: black; /* Cambiado a negro */
+        }
+
+        /* Estilo para el botón */
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        /* Enlace de regresar */
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+
+        /* Animación de aparición */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Título de la web en la parte superior */
+        .web-title {
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Título de la web -->
+    <div class="web-title">
+        Champion Calendar
+    </div>
+
+    <!-- Card con el formulario centrado -->
+    <div class="form-card">
+        <h1>Crear Nuevo Equipo</h1>
+
+        <!-- Formulario para crear un equipo -->
+        <form action="/equipos/crear" method="POST">
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre del Equipo</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required>
+            </div>
+            <div class="mb-3">
+                <label for="estadio" class="form-label">Estadio</label>
+                <input type="text" class="form-control" id="estadio" name="estadio" required>
+            </div>
+            <div class="mb-3">
+                <label for="pais" class="form-label">País</label>
+                <input type="text" class="form-control" id="pais" name="pais" required>
+            </div>
+            <div class="mb-3">
+                <label for="url_imagen" class="form-label">URL Imagen</label>
+                <input type="text" class="form-control" id="url_imagen" name="url_imagen">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Crear Equipo</button>
+        </form>
+
+        <a href="/equipos" class="btn btn-secondary mt-3 w-100">Volver a la lista de equipos</a>
+    </div>
+
+</body>
+</html>
