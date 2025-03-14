@@ -25,9 +25,9 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    {% if session['usuario'] is defined %}
+                    {% if usuario is not null %}
                         <li class="nav-item">
-                            <span class="navbar-text me-3">Bienvenido, {{ session['usuario']['usuario'] }}</span>
+                            <span class="navbar-text me-3">Bienvenido, {{ usuario.usuario }}</span>
                         </li>
                         <li class="nav-item">
                             <a href="/panelControl" class="btn btn-info me-3">Ir al Panel de Control</a>
@@ -55,7 +55,7 @@
                     <tr>
                         <th>Equipo</th>
                         <th>Información</th>
-                        {% if session['usuario'] is defined %}
+                        {% if usuario is not null %}
                             <th>Acciones</th>
                         {% endif %}
                     </tr>
@@ -65,7 +65,7 @@
                         <tr>
                             <td>{{ equipo.nombre }}</td>
                             <td><a href="/equipos/{{ equipo.id }}" class="btn btn-info">Ver Detalles</a></td>
-                            {% if session['usuario'] is defined %}
+                            {% if usuario is not null %}
                                 <td>
                                     <a href="/equipos/{{ equipo.id }}/editar" class="btn btn-warning btn-sm">Editar</a>
                                     <a href="/equipos/{{ equipo.id }}/eliminar" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar este equipo?');">Eliminar</a>

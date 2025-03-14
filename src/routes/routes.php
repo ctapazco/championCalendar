@@ -1,7 +1,13 @@
 <?php
 
-// Al principio del archivo
-session_start();
+// Iniciar sesión solo si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../../vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 require_once __DIR__ . '/router.php';
 require_once __DIR__ . '/../config/database.php';
@@ -10,24 +16,40 @@ require_once __DIR__ . '/../controllers/JugadorController.php';
 require_once __DIR__ . '/../controllers/EncuentroController.php';
 require_once __DIR__ . '/../controllers/UsuarioController.php';
 
-// Función para verificar JWT (esto sigue siendo necesario si usas JWT)
+// Instanciar controladores con la conexión a la base de datos
+$equipoController = new EquipoController($pdo);
+$jugadorController = new JugadorController($pdo);
+$encuentroController = new EncuentroController($pdo);
+$usuarioController = new UsuarioController($pdo);
+
+// ===================
+// Función para verificar sesión activa
+// ===================
+function verificarSesion() {
+    if (!isset($_SESSION['usuario'])) {
+        header("Location: /usuarios/login");
+        exit;
+    }
+}
+
+// ===================
+// Función para verificar JWT (API)
+// ===================
 function verificarToken() {
     $headers = getallheaders();
+    $token = $headers['Authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? null;
 
-    // Verificar si el header Authorization está presente
-    if (!isset($headers['Authorization'])) {
+    if (!$token || !str_starts_with($token, "Bearer ")) {
         http_response_code(401);
         echo json_encode(["error" => "Acceso no autorizado"]);
         exit;
     }
 
-    // Obtener el token del header
-    $token = str_replace("Bearer ", "", $headers['Authorization']);
+    $token = str_replace("Bearer ", "", $token);
 
     try {
-        // Decodificar el token usando la clave secreta
-        $decoded = JWT::decode($token, "Ctapasco290692", array('HS256'));
-        $_SESSION['usuario'] = $decoded;  // Guardar los datos decodificados en la sesión
+        $decoded = JWT::decode($token, new Key("Ctapasco290692", 'HS256'));
+        $_SESSION['usuario'] = (array) $decoded;
     } catch (Exception $e) {
         http_response_code(401);
         echo json_encode(["error" => "Token inválido o expirado"]);
@@ -35,107 +57,71 @@ function verificarToken() {
     }
 }
 
-// Ruta para la página principal (index)
-route('GET', '/', function() {
-    return renderizarVista('index.twig');  
+// ===================
+//  Rutas Web
+// ===================
+
+route('GET', '/', fn() => renderizarVista('index.twig'));
+
+//  Equipos (Web)
+route('GET', '/equipos', fn() => $equipoController->listarEquiposWeb());
+route('GET', '/equipos/([0-9]+)', fn($id) => $equipoController->obtenerEquipo($id));
+route('GET', '/equipos/crear', fn() => $equipoController->mostrarFormularioCrearEquipo());
+route('POST', '/equipos/crear', fn() => $equipoController->crearEquipo());
+route('GET', '/equipos/([0-9]+)/editar', fn($id) => $equipoController->editarEquipo($id));
+route('POST', '/equipos/([0-9]+)/editar', fn($id) => $equipoController->editarEquipo($id));
+route('GET', '/equipos/([0-9]+)/eliminar', fn($id) => $equipoController->eliminarEquipo($id));
+
+//  Panel de Control (Requiere sesión)
+route('GET', '/panelControl', function() {
+    verificarSesion();
+    return renderizarVista('panelControl.twig', ["usuario" => $_SESSION['usuario']]);
 });
 
-// Rutas de equipos (acceso público)
-route('GET', '/equipos', function() {
-    return (new EquipoController())->listarEquipos();
-});
-
-// Ruta para mostrar el equipo específico
-route('GET', '/equipos/([0-9]+)', function($id) {
-    return (new EquipoController())->obtenerEquipo($id);
-});
-
-// Rutas de Usuarios (para login, logout y registro)
-route('GET', '/usuarios/login', function() {
+// 👤 Autenticación (Web)
+route('GET', '/usuarios/login', function() use ($usuarioController) {
     if (isset($_SESSION['usuario'])) {
-        // Si el usuario ya está logueado, redirigir a la página de equipos
         header("Location: /equipos");
         exit;
     }
-    return (new UsuarioController())->login();  // Mostrar formulario de login
+    return $usuarioController->login();
 });
 
-route('POST', '/usuarios/login', function() {
-    return (new UsuarioController())->login();  // Procesar el login
-});
+route('POST', '/usuarios/login', fn() => $usuarioController->login());
+route('GET', '/usuarios/logout', fn() => session_destroy() && header("Location: /equipos"));
+route('GET', '/usuarios/registrar', fn() => $usuarioController->registrar());
+route('POST', '/usuarios/registrar', fn() => $usuarioController->registrar());
 
-route('GET', '/usuarios/logout', function() {
-    session_start();  // Asegúrate de llamar a session_start() aquí
-    session_unset();  // Eliminar todas las variables de sesión
-    session_destroy();  // Destruir la sesión
-    header("Location: /equipos");  // Redirigir al usuario a la lista de equipos
-    exit;
-});
+// ===================
+//  Rutas API (JSON)
+// ===================
 
-// Ruta para mostrar el formulario de registro
-route('GET', '/usuarios/registrar', function() {
-    return (new UsuarioController())->registrar();  // Mostrar formulario de registro
-});
+//  Equipos (API)
+route('GET', '/api/equipos', fn() => $equipoController->listarEquiposApi());
+route('GET', '/api/equipos/([0-9]+)', fn($id) => $equipoController->obtenerEquipoApi($id));
+route('GET', '/api/equipos/([0-9]+)/editar', fn($id) => $equipoController->obtenerEquipoParaEditarApi($id));
+route('POST', '/api/equipos', fn() => verificarToken() && $equipoController->crearEquipoApi());
+route('PUT', '/api/equipos/([0-9]+)', fn($id) => verificarToken() && $equipoController->editarEquipoApi($id));
+route('DELETE', '/api/equipos/([0-9]+)', fn($id) => verificarToken() && $equipoController->eliminarEquipoApi($id));
 
-route('POST', '/usuarios/registrar', function() {
-    return (new UsuarioController())->registrar();  // Procesar el registro
-});
+//  Jugadores (API)
+route('GET', '/api/jugadores', fn() => $jugadorController->listarJugadoresApi());
+route('GET', '/api/jugadores/([0-9]+)', fn($id) => $jugadorController->obtenerJugadorApi($id));
+route('POST', '/api/jugadores', fn() => verificarToken() && $jugadorController->crearJugadorApi());
+route('PUT', '/api/jugadores/([0-9]+)', fn($id) => verificarToken() && $jugadorController->editarJugadorApi($id));
+route('DELETE', '/api/jugadores/([0-9]+)', fn($id) => verificarToken() && $jugadorController->eliminarJugadorApi($id));
 
-// Rutas protegidas (requieren autenticación)
-route('POST', '/equipos', function() {
-    verificarToken();  // Verificar que el usuario esté autenticado
-    return (new EquipoController())->crearEquipo();
-});
+//  Encuentros (API)
+route('GET', '/api/encuentros', fn() => $encuentroController->listarEncuentrosApi());
+route('GET', '/api/encuentros/([0-9]+)', fn($id) => $encuentroController->obtenerEncuentroApi($id));
+route('POST', '/api/encuentros', fn() => verificarToken() && $encuentroController->crearEncuentroApi());
+route('PUT', '/api/encuentros/([0-9]+)', fn($id) => verificarToken() && $encuentroController->editarEncuentroApi($id));
+route('DELETE', '/api/encuentros/([0-9]+)', fn($id) => verificarToken() && $encuentroController->eliminarEncuentroApi($id));
 
-// Ruta del panel de control
-route('GET', '/panelControl', function() {
-    if (!isset($_SESSION['usuario'])) {
-        // Si no está logueado, redirigir al login
-        header("Location: /usuarios/login");
-        exit;
-    }
-    return renderizarVista('panelControl.twig');
-});
+//  Autenticación API
+route('POST', '/api/usuarios/login', fn() => $usuarioController->loginApi());
 
-// Ruta para editar equipo (GET y POST)
-route('GET', '/equipos/([0-9]+)/editar', function($id) {
-    if (!isset($_SESSION['usuario'])) {
-        // Si no está logueado, redirigir al login
-        header("Location: /usuarios/login");
-        exit;
-    }
-    return (new EquipoController())->editarEquipo($id);  // Mostrar formulario de edición del equipo
-});
-
-route('POST', '/equipos/([0-9]+)/editar', function($id) {
-    if (!isset($_SESSION['usuario'])) {
-        // Si no está logueado, redirigir al login
-        header("Location: /usuarios/login");
-        exit;
-    }
-    return (new EquipoController())->editarEquipo($id);  // Procesar la edición del equipo
-});
-// Ruta para eliminar un equipo
-route('GET', '/equipos/([0-9]+)/eliminar', function($id) {
-    if (!isset($_SESSION['usuario'])) {
-        header("Location: /usuarios/login");
-        exit;
-    }
-    return (new EquipoController())->eliminarEquipo($id);  // Procesar la eliminación del equipo
-});
-
-// Ruta para crear equipo
-route('GET', '/equipos/crear', function() {
-    return (new EquipoController())->crearEquipo();  // Mostrar formulario para crear equipo
-});
-
-route('POST', '/equipos/crear', function() {
-    if (!isset($_SESSION['usuario'])) {
-        header("Location: /usuarios/login");
-        exit;
-    }
-    return (new EquipoController())->crearEquipo();  // Procesar la creación del equipo
-});
-
-// Ejecutar la ruta solicitada
+// ===================
+//  Ejecutar la ruta solicitada
+// ===================
 dispatch($_SERVER['REQUEST_METHOD'], strtok($_SERVER["REQUEST_URI"], '?'));

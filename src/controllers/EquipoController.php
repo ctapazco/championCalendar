@@ -2,110 +2,241 @@
 
 require_once __DIR__ . '/../models/Equipo.php';
 require_once __DIR__ . '/../config/view.php';
+require_once __DIR__ . '/../config/database.php';
 
 class EquipoController {
 
-    public function listarEquipos() {
-        // Comprobar si hay un término de búsqueda
-        $buscar = isset($_GET['buscar']) ? $_GET['buscar'] : '';
-        
-        if ($buscar) {
-            $equipos = Equipo::buscarEquipos($buscar);
-        } else {
-            $equipos = Equipo::obtenerTodos();
-        }
-    
-        // Pasar la sesión y los equipos a la vista
-        renderizarVista('equipos.twig', [
-            'equipos' => $equipos,
-            'buscar' => $buscar,
-            'session' => $_SESSION  // Pasar la sesión a la vista
-        ]);
+    private $pdo;
+
+    public function __construct() {
+        global $pdo;
+        $this->pdo = $pdo;
     }
 
+    public function listarEquiposApi() {
+        header("Content-Type: application/json");
+        try {
+            echo json_encode(["equipos" => $this->obtenerEquiposDesdeDB()]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["error" => "Error interno del servidor"]);
+        }
+        exit;
+    }
+
+    private function obtenerEquiposDesdeDB() {
+        try {
+            $stmt = $this->pdo->query("SELECT id, nombre FROM equipos");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            die(json_encode(["error" => "Error al obtener los equipos: " . $e->getMessage()]));
+        }
+    }
+
+    // ✅ Obtener detalles de un equipo (Web)
     public function obtenerEquipo($id) {
-        // Obtener los detalles del equipo
         $equipo = Equipo::obtenerPorId($id);
-    
-        // Obtener los encuentros del equipo
         $encuentros = Encuentro::obtenerPorEquipoId($id);
-    
-        // Obtener los jugadores del equipo
         $jugadores = Jugador::obtenerJugadoresPorEquipo($id);
-    
+
         if ($equipo) {
-            // Si el equipo es encontrado, mostrar los detalles junto con los encuentros y jugadores
             renderizarVista('detalleEquipo.twig', [
                 'equipo' => $equipo,
                 'encuentros' => $encuentros,
                 'jugadores' => $jugadores
             ]);
         } else {
-            // Si no se encuentra el equipo, mostrar un error 404
             http_response_code(404);
-            echo "Equipo no encontrado";
+            echo json_encode(["error" => "Equipo no encontrado"]);
         }
     }
 
+    // ✅ Obtener un equipo (API)
+    public function obtenerEquipoApi($id) {
+        header('Content-Type: application/json');
+        $equipo = $this->obtenerEquipoDesdeDB($id);
+    
+        if ($equipo) {
+            echo json_encode($equipo, JSON_UNESCAPED_UNICODE);
+        } else {
+            http_response_code(404);
+            echo json_encode(["error" => "Equipo no encontrado"]);
+        }
+    }
+
+    private function obtenerEquipoDesdeDB($id) {
+        try {
+            $stmt = $this->pdo->prepare("SELECT id, nombre FROM equipos WHERE id = ?");
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(["error" => "Error al obtener el equipo: " . $e->getMessage()]);
+            return null;
+        }
+    }
+
+    // ✅ Crear un equipo (Web)
     public function crearEquipo() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Recoger los datos del formulario
             $data = $_POST;
-            
-        
-            Equipo::crear($data);
-    
-            // Redirigir al listado de equipos
-            header("Location: /equipos"); 
-            exit;
+
+            try {
+                Equipo::crear($data);
+                header("Location: /equipos"); 
+                exit;
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(["error" => "No se pudo crear el equipo"]);
+            }
         } else {
-            // Si la solicitud es GET, mostrar el formulario
             renderizarVista('crearEquipo.twig');
         }
     }
-    
-    
-    public function editarEquipo($id) {
-        $equipo = Equipo::obtenerPorId($id);  // Obtener el equipo por ID
-    
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Si el formulario es enviado, procesar la edición
-            $data = $_POST;
-            
-            // Actualizar el equipo en la base de datos
-            if (Equipo::actualizar($id, $data)) {
-                // Redirigir a los detalles del equipo con un mensaje de éxito
-                $_SESSION['mensaje'] = "Cambios realizados con éxito";
-                header("Location: /equipos/{$id}");  // Redirigir a la página de detalles del equipo
-                exit;
-            } else {
-                // Si no se pudo actualizar, mostrar error
-                $_SESSION['mensaje_error'] = "Hubo un problema al guardar los cambios.";
-                header("Location: /equipos/{$id}/editar");  // Redirigir de vuelta al formulario de edición
-                exit;
-            }
+
+    // ✅ Crear un equipo (API)
+    public function crearEquipoApi() {
+        header("Content-Type: application/json");
+
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (empty($data['nombre']) || empty($data['estadio']) || empty($data['pais'])) {
+            http_response_code(400);
+            echo json_encode(["error" => "Todos los campos son obligatorios"]);
+            return;
         }
-    
-        // Si el equipo existe, mostrar el formulario de edición
-        if ($equipo) {
-            renderizarVista('editarEquipo.twig', ['equipo' => $equipo]);
-        } else {
-            // Si no se encuentra el equipo, mostrar un error 404
-            http_response_code(404);
-            echo "Equipo no encontrado";
+
+        try {
+            $stmt = $this->pdo->prepare("INSERT INTO equipos (nombre, estadio, pais, url_imagen) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$data['nombre'], $data['estadio'], $data['pais'], $data['url_imagen'] ?? null]);
+
+            http_response_code(201);
+            echo json_encode(["mensaje" => "Equipo creado con éxito", "equipo" => $data]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["error" => "No se pudo crear el equipo: " . $e->getMessage()]);
         }
     }
 
-    public function eliminarEquipo($id) {
+    // ✅ Editar un equipo (Web)
+    public function editarEquipo($id) {
         $equipo = Equipo::obtenerPorId($id);
     
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = $_POST;
+
+            if (Equipo::actualizar($id, $data)) {
+                $_SESSION['mensaje'] = "Cambios guardados con éxito";
+                header("Location: /equipos/{$id}");
+                exit;
+            } else {
+                $_SESSION['mensaje_error'] = "Error al actualizar equipo.";
+                header("Location: /equipos/{$id}/editar");
+                exit;
+            }
+        }
+
         if ($equipo) {
-            Equipo::eliminar($id);  // Llamar al método para eliminar el equipo
-            header("Location: /equipos");  // Redirigir a la lista de equipos
-            exit;
+            renderizarVista('editarEquipo.twig', ['equipo' => $equipo]);
         } else {
             http_response_code(404);
-            echo "Equipo no encontrado";
+            echo json_encode(["error" => "Equipo no encontrado"]);
+        }
+    }
+
+    // ✅ Editar un equipo (API)
+    public function editarEquipoApi($id) {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (empty($data['nombre']) || empty($data['estadio']) || empty($data['pais'])) {
+            http_response_code(400);
+            echo json_encode(["error" => "Todos los campos son obligatorios"]);
+            return;
+        }
+
+        if (Equipo::actualizar($id, $data)) {
+            echo json_encode(["mensaje" => "Equipo actualizado con éxito"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["error" => "No se pudo actualizar el equipo"]);
+        }
+    }
+
+    // ✅ Eliminar un equipo (Web)
+    public function eliminarEquipo($id) {
+        if (!isset($_SESSION['usuario'])) {
+            header("Location: /usuarios/login");
+            exit;
+        }
+
+        $equipo = Equipo::obtenerPorId($id);
+        if (!$equipo) {
+            http_response_code(404);
+            echo json_encode(["error" => "Equipo no encontrado"]);
+            exit;
+        }
+
+        if (Equipo::eliminar($id)) {
+            $_SESSION['mensaje'] = "Equipo eliminado correctamente.";
+            header("Location: /equipos");
+            exit;
+        } else {
+            http_response_code(500);
+            echo json_encode(["error" => "No se pudo eliminar el equipo"]);
+        }
+    }
+
+    // ✅ Eliminar un equipo (API)
+    public function eliminarEquipoApi($id) {
+        header('Content-Type: application/json');
+
+        $equipo = Equipo::obtenerPorId($id);
+        if (!$equipo) {
+            http_response_code(404);
+            echo json_encode(["error" => "Equipo no encontrado"]);
+            return;
+        }
+
+        if (Equipo::eliminar($id)) {
+            echo json_encode(["mensaje" => "Equipo eliminado con éxito"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["error" => "No se pudo eliminar el equipo"]);
+        }
+    }
+
+    public function listarEquiposWeb() {
+        global $twig;
+
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $equipos = $this->obtenerEquiposDesdeDB();
+        
+        echo $twig->render('equipos.twig', [
+            'equipos' => $equipos,
+            'usuario' => $_SESSION['usuario'] ?? null
+        ]);
+    }
+
+    public function mostrarFormularioCrearEquipo() {
+        renderizarVista('crearEquipo.twig');  
+    }
+    
+    public function obtenerEquipoParaEditarApi($id) {
+        header('Content-Type: application/json');
+    
+        // Obtener el equipo por ID
+        $equipo = $this->obtenerEquipoDesdeDB($id);
+    
+        if ($equipo) {
+            echo json_encode(["equipo" => $equipo], JSON_UNESCAPED_UNICODE);
+        } else {
+            http_response_code(404);
+            echo json_encode(["error" => "Equipo no encontrado"]);
         }
     }
 }
