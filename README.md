@@ -128,4 +128,3 @@ Si deseas usar un servidor PHP embebido para pruebas, usa:
 php -S localhost:8000 -t public/
 
 Ahora puedes empezar a trabajar con Champion Calendar.
-
