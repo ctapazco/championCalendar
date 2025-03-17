@@ -130,7 +130,7 @@ composer install
 
 Si el servidor Apache está corriendo y el VirtualHost está configurado correctamente, puedes acceder al proyecto en tu navegador en:
 ```
-http://www.champion-calendar.local
+http://www.championcalendar.local
 ```
 
 Si deseas usar un servidor PHP embebido para pruebas, usa:
