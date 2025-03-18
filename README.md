@@ -213,7 +213,7 @@ Actualmente, la tabla `usuarios` no está relacionada directamente con `jugadore
 - Asignar un usuario como administrador de un equipo.
 - Permitir que un usuario sea un jugador registrado en la plataforma.
 
-### 📌 **Posibles mejoras en la base de datos**
+**Posibles mejoras en la base de datos**
 1. **Relacionar `usuarios` con `equipos`**:
    - Agregar una tabla intermedia `usuarios_equipos` para asociar usuarios con equipos.
 2. **Permitir que los usuarios sean jugadores**:
@@ -223,6 +223,6 @@ Actualmente, la tabla `usuarios` no está relacionada directamente con `jugadore
 4. **Sistema de roles**:
    - Agregar un campo `rol` en `usuarios` para definir permisos (admin, jugador, espectador, etc.).
 
-Con estas mejoras, la base de datos sería más flexible y escalable para futuras funcionalidades. 🚀
+Con estas mejoras, la base de datos sería más flexible y escalable para futuras funcionalidades. 
 
 
