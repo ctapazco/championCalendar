@@ -58,6 +58,42 @@ championCalendar-main/
 │── README.md            # Documentación del proyecto
 ```
 
+## Instalación y ejecución
+
+### Configuración del entorno
+Renombrar el archivo `.env.example` a `.env` y configurar las variables necesarias:
+```sh
+cp .env.example .env
+```
+
+Editar el archivo `.env` con los valores adecuados:
+```
+APP_ENV=local
+APP_DEBUG=true
+JWT_SECRET=your_secret_key_here
+```
+
+### Instalación de dependencias
+
+Ejecutar el siguiente comando para instalar las dependencias del proyecto:
+```sh
+composer install
+```
+
+### Ejecución del proyecto
+
+Si el servidor Apache está corriendo y el VirtualHost está configurado correctamente, puedes acceder al proyecto en tu navegador en:
+```
+http://www.championcalendar.local
+```
+
+Si deseas usar un servidor PHP embebido para pruebas, usa:
+```sh
+php -S localhost:8000 -t public/
+```
+
+Ahora puedes empezar a trabajar con Champion Calendar.
+
 ## Código relevante
 
 ### Creación de los controladores
