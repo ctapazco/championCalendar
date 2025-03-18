@@ -208,8 +208,7 @@ CREATE TABLE `jugadores` (
 
 ## Relación entre `usuarios` y otras tablas
 
-### 📖 Explicación:
-Actualmente, la tabla `usuarios` no está relacionada directamente con `jugadores` o `equipos`. Sin embargo, podría implementarse una relación para:
+La tabla `usuarios` no está relacionada directamente con `jugadores` o `equipos`. Sin embargo, podría implementarse una relación para:
 - Asignar un usuario como administrador de un equipo.
 - Permitir que un usuario sea un jugador registrado en la plataforma.
 
