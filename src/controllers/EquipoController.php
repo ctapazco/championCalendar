@@ -206,21 +206,34 @@ class EquipoController {
             echo json_encode(["error" => "No se pudo eliminar el equipo"]);
         }
     }
-
     public function listarEquiposWeb() {
         global $twig;
-
+    
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-
+    
+        // Obtener el parámetro de búsqueda desde la URL
+        $buscar = $_GET['buscar'] ?? null;
+    
+        // Obtener todos los equipos desde la base de datos
         $equipos = $this->obtenerEquiposDesdeDB();
-        
+    
+        // Aplicar búsqueda si se ingresó un término
+        if (!empty($buscar)) {
+            $equipos = array_filter($equipos, function ($equipo) use ($buscar) {
+                return stripos($equipo['nombre'], $buscar) !== false;
+            });
+        }
+    
+        // Renderizar la vista con los equipos filtrados y el usuario
         echo $twig->render('equipos.twig', [
             'equipos' => $equipos,
+            'buscar' => $buscar,
             'usuario' => $_SESSION['usuario'] ?? null
         ]);
     }
+    
 
     public function mostrarFormularioCrearEquipo() {
         renderizarVista('crearEquipo.twig');  

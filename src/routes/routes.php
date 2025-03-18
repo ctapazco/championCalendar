@@ -10,7 +10,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 require_once __DIR__ . '/router.php';
-require_once __DIR__ . '/../config/database.php';
+
 require_once __DIR__ . '/../controllers/EquipoController.php';
 require_once __DIR__ . '/../controllers/JugadorController.php';
 require_once __DIR__ . '/../controllers/EncuentroController.php';
@@ -22,9 +22,9 @@ $jugadorController = new JugadorController($pdo);
 $encuentroController = new EncuentroController($pdo);
 $usuarioController = new UsuarioController($pdo);
 
-// ===================
+
 // Función para verificar sesión activa
-// ===================
+
 function verificarSesion() {
     if (!isset($_SESSION['usuario'])) {
         header("Location: /usuarios/login");
@@ -32,9 +32,9 @@ function verificarSesion() {
     }
 }
 
-// ===================
+
 // Función para verificar JWT (API)
-// ===================
+
 function verificarToken() {
     $headers = getallheaders();
     $token = $headers['Authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? null;
@@ -57,9 +57,8 @@ function verificarToken() {
     }
 }
 
-// ===================
+
 //  Rutas Web
-// ===================
 
 route('GET', '/', fn() => renderizarVista('index.twig'));
 
@@ -78,7 +77,7 @@ route('GET', '/panelControl', function() {
     return renderizarVista('panelControl.twig', ["usuario" => $_SESSION['usuario']]);
 });
 
-// 👤 Autenticación (Web)
+// Autenticación (Web)
 route('GET', '/usuarios/login', function() use ($usuarioController) {
     if (isset($_SESSION['usuario'])) {
         header("Location: /equipos");
@@ -92,9 +91,8 @@ route('GET', '/usuarios/logout', fn() => session_destroy() && header("Location: 
 route('GET', '/usuarios/registrar', fn() => $usuarioController->registrar());
 route('POST', '/usuarios/registrar', fn() => $usuarioController->registrar());
 
-// ===================
 //  Rutas API (JSON)
-// ===================
+
 
 //  Equipos (API)
 route('GET', '/api/equipos', fn() => $equipoController->listarEquiposApi());
@@ -121,7 +119,5 @@ route('DELETE', '/api/encuentros/([0-9]+)', fn($id) => verificarToken() && $encu
 //  Autenticación API
 route('POST', '/api/usuarios/login', fn() => $usuarioController->loginApi());
 
-// ===================
-//  Ejecutar la ruta solicitada
-// ===================
+
 dispatch($_SERVER['REQUEST_METHOD'], strtok($_SERVER["REQUEST_URI"], '?'));

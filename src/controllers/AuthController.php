@@ -27,7 +27,7 @@ class AuthController
 
     public function autenticarUsuario($email, $password)
     {
-        // Verificar si las credenciales son correctas
+        // comprobar si existe el usuario
         $stmt = $this->pdo->prepare("SELECT * FROM usuarios WHERE email = :email");
         $stmt->execute(['email' => $email]);
         $usuario = $stmt->fetch();
@@ -43,7 +43,7 @@ class AuthController
             ];
 
             $jwt = JWT::encode($payload, $this->secretKey);
-            setcookie('auth_token', $jwt, $expirationTime, '/');  // Guardar el JWT en una cookie
+            setcookie('auth_token', $jwt, $expirationTime, '/');  // lo guarda en una cookie
 
             return true;
         }

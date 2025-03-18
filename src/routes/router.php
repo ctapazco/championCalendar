@@ -42,7 +42,7 @@ route('GET', '/panelControl', function() {
 route('GET', '/usuarios/logout', function() {
     session_unset();  // Eliminar todas las variables de sesión
     session_destroy();  // Destruir la sesión
-    header("Location: /equipos");  // Redirigir al usuario a la lista de equipos
+    header("Location: /equipos");  
     exit;
 });
 

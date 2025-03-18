@@ -4,89 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ equipo.nombre }} - Champion Calendar</title>
-    <!-- Incluir los estilos de Bootstrap -->
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Fondo con gradiente */
-        .fondo-plantilla {
-            background: linear-gradient(135deg, rgba(0, 102, 51, 0.8), rgba(0, 153, 255, 0.8), rgba(255, 215, 0, 0.6));
-        }
-        /* Estilo para la tarjeta del equipo */
-        .team-card {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
+        /* Fondo general */
+        body {
+            background: linear-gradient(to right, #f8f9fa, #e3f2fd);
+            color: #333;
         }
 
-        /* Banner de equipo */
+        /* Contenedor principal */
+        .container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Card del equipo */
+        .team-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Banner del equipo */
         .team-banner {
             width: 100%;
             height: 300px;
             background-image: url('{{ equipo.url_imagen }}');
             background-size: cover;
             background-position: center;
+            border-radius: 12px 12px 0 0;
+        }
+
+        /* Estilo para tablas */
+        .table {
+            background: #ffffff;
             border-radius: 10px;
-            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .table-hover tbody tr:hover {
+            background: rgba(0, 123, 255, 0.1);
         }
 
-        /* Estilo de la tabla de partidos */
-        .tabla-partidos {
-            background-color: #fff;
+        /* Mejorar visibilidad de títulos */
+        h3 {
+            color: #007bff;
+            font-weight: bold;
+            text-align: center;
         }
 
-        /* Estilo de la tabla de jugadores */
-        .tabla-jugadores {
-            background-color: #fff;
-            margin-top: 20px;
-        }
-
-        /* Estilos para los botones */
+        /* Botones */
         .btn-lg {
-            padding: 10px 20px;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px;
+            transition: all 0.3s ease-in-out;
+        }
+        .btn-lg:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
         }
 
-        /* Botón de "volver arriba" */
-        .volver-arriba-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: #007bff;
-            color: white;
-            border-radius: 50%;
-            padding: 15px;
-            font-size: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        /* Contenedor de la gráfica */
+        #grafica-container {
+            display: none;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
+
     </style>
 </head>
-<body class="fondo-plantilla">
+<body>
     <div class="container mt-4">
         <!-- Card con información del equipo -->
         <div class="row">
             <div class="col-md-4">
                 <div class="card team-card">
                     <div class="team-banner"></div>
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h5 class="card-title">{{ equipo.nombre }}</h5>
-                        <p class="card-text"><strong>Estadio principal:</strong> {{ equipo.estadio }}</p>
-                        <p class="card-text"><strong>País:</strong> {{ equipo.pais }}</p>
+                        <p class="card-text"><strong>🏟 Estadio:</strong> {{ equipo.estadio }}</p>
+                        <p class="card-text"><strong>🌍 País:</strong> {{ equipo.pais }}</p>
 
-                        <!-- Botón para volver a la lista de equipos -->
-                        <a href="/equipos" class="btn btn-primary btn-lg">Volver a la lista de equipos</a>
+                        <a href="/equipos" class="btn btn-primary btn-lg w-100">⬅️ Volver a la lista</a>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-8">
-                <!-- Tabla de los partidos del equipo -->
-                <h3>Partidos del equipo</h3>
-                <table class="table table-bordered tabla-partidos">
-                    <thead>
+                <!-- Tabla de los partidos -->
+                <h3>📅 Partidos del equipo</h3>
+                <table class="table table-hover table-bordered">
+                    <thead class="table-primary">
                         <tr>
                             <th>Fecha</th>
                             <th>Hora</th>
-                            <th>Equipo Local</th>
-                            <th>Equipo Visitante</th>
+                            <th>Local</th>
+                            <th>Visitante</th>
                             <th>Resultado</th>
                         </tr>
                     </thead>
@@ -109,58 +128,96 @@
             </div>
         </div>
 
-        <!-- Sección de la plantilla de jugadores -->
-        <div class="row">
-            <div class="col-md-12">
-                <h3>Plantilla de Jugadores</h3>
-                <br>
-                <!-- Tabla de jugadores -->
-                <table class="table table-bordered tabla-jugadores">
-                    <thead>
+        <!-- Tabla de jugadores -->
+        <div class="mt-4">
+            <h3>⚽ Plantilla de Jugadores</h3>
+            <table class="table table-hover table-bordered">
+                <thead class="table-warning">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Edad</th>
+                        <th>Dorsal</th>
+                        <th>Minutos Jugados</th>
+                        <th>Goles</th>
+                        <th>Asistencias</th>
+                        <th>Tarjetas Amarillas</th>
+                        <th>Tarjetas Rojas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for jugador in jugadores %}
                         <tr>
-                            <th>Nombre</th>
-                            <th>Edad</th>
-                            <th>Dorsal</th>
-                            <th>Minutos Jugados</th>
-                            <th>Goles</th>
-                            <th>Asistencias</th>
-                            <th>Tarjetas Amarillas</th>
-                            <th>Tarjetas Rojas</th>
+                            <td>{{ jugador.nombre }}</td>
+                            <td>{{ jugador.edad }}</td>
+                            <td>{{ jugador.dorsal }}</td>
+                            <td>{{ jugador.minutos_jugados }}</td>
+                            <td>{{ jugador.goles }}</td>
+                            <td>{{ jugador.asistencias }}</td>
+                            <td>{{ jugador.tarjetas_amarillas }}</td>
+                            <td>{{ jugador.tarjetas_rojas }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for jugador in jugadores %}
-                            <tr>
-                                <td>{{ jugador.nombre }}</td>
-                                <td>{{ jugador.edad }}</td>
-                                <td>{{ jugador.dorsal }}</td>
-                                <td>{{ jugador.minutos_jugados }}</td>
-                                <td>{{ jugador.goles }}</td>
-                                <td>{{ jugador.asistencias }}</td>
-                                <td>{{ jugador.tarjetas_amarillas }}</td>
-                                <td>{{ jugador.tarjetas_rojas }}</td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td colspan="8" class="text-center">No hay jugadores disponibles para este equipo.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No hay jugadores disponibles.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Botón para mostrar la gráfica -->
+            <button class="btn btn-success btn-lg w-100" onclick="mostrarGrafica()">📊 Ver Estadísticas</button>
+
+            <!-- Contenedor de la gráfica -->
+            <div id="grafica-container">
+                <canvas id="grafica-jugadores"></canvas>
             </div>
         </div>
-
-        <!-- Enlace para eliminar el equipo, solo si el usuario está logueado -->
-        {% if session['usuario'] is defined %}
-            <div class="mt-3">
-                <a href="/equipos/{{ equipo.id }}/eliminar" class="btn btn-danger mt-3" onclick="return confirm('¿Estás seguro de que deseas eliminar este equipo?');">Eliminar Equipo</a>
-            </div>
-        {% endif %}
     </div>
 
+    <!-- Incluir Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+   function mostrarGrafica() {
+    var graficaContainer = document.getElementById("grafica-container");
 
+    // Si el gráfico ya está visible, lo oculta; si no, lo muestra
+    if (graficaContainer.style.display === "block") {
+        graficaContainer.style.display = "none";
+    } else {
+        graficaContainer.style.display = "block";
 
-    <!-- Incluir el JS de Bootstrap -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        var ctx = document.getElementById('grafica-jugadores').getContext('2d');
+
+        var jugadores = [
+            {% for jugador in jugadores %}
+                {
+                    nombre: "{{ jugador.nombre }}",
+                    minutos: {{ jugador.minutos_jugados }},
+                    goles: {{ jugador.goles }},
+                    asistencias: {{ jugador.asistencias }},
+                    amarillas: {{ jugador.tarjetas_amarillas }},
+                    rojas: {{ jugador.tarjetas_rojas }}
+                },
+            {% endfor %}
+        ];
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: jugadores.map(j => j.nombre),
+                datasets: [
+                    { label: 'Minutos Jugados', data: jugadores.map(j => j.minutos), backgroundColor: '#17a2b8' },
+                    { label: 'Goles', data: jugadores.map(j => j.goles), backgroundColor: '#dc3545' },
+                    { label: 'Asistencias', data: jugadores.map(j => j.asistencias), backgroundColor: '#28a745' },
+                    { label: 'Tarjetas Amarillas', data: jugadores.map(j => j.amarillas), backgroundColor: '#ffc107' },
+                    { label: 'Tarjetas Rojas', data: jugadores.map(j => j.rojas), backgroundColor: '#6c757d' }
+                ]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+    }
+}
+
+    </script>
 </body>
 </html>

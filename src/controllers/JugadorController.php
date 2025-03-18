@@ -56,4 +56,43 @@ class JugadorController {
         $resultado = Jugador::crear($data);
         echo json_encode(["mensaje" => "Jugador creado con éxito", "id" => $resultado]);
     }
+
+    
+        public function eliminarJugadorApi($id) {
+            verificarToken(); // Solo usuarios autenticados pueden eliminar jugadores
+
+        $jugador = Jugador::obtenerPorId($id);
+        if (!$jugador) {
+            http_response_code(404);
+            echo json_encode(["error" => "Jugador no encontrado"]);
+            return;
+        }
+
+        if (Jugador::eliminar($id)) {
+            echo json_encode(["mensaje" => "Jugador eliminado con éxito"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["error" => "Error al eliminar el jugador"]);
+        }
+    }
+        public function eliminarJugadorWeb($id) {
+            verificarSesion(); // Solo usuarios autenticados pueden eliminar jugadores
+
+            $jugador = Jugador::obtenerPorId($id);
+            if (!$jugador) {
+                $_SESSION['error'] = "Jugador no encontrado.";
+                header("Location: /equipos");
+                exit;
+            }
+
+            if (Jugador::eliminar($id)) {
+                $_SESSION['mensaje'] = "Jugador eliminado con éxito.";
+            } else {
+                $_SESSION['error'] = "Error al eliminar el jugador.";
+            }
+
+            header("Location: /equipos/" . $jugador['equipo_id']);
+            exit;
+        }
+
 }

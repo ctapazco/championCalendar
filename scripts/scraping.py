@@ -33,6 +33,9 @@ except mysql.connector.Error as e:
 # Obtener todos los partidos
 events = driver.find_elements(By.CLASS_NAME, 'event__match')
 
+# Lista temporal para almacenar los partidos antes de ordenarlos
+partidos = []
+
 for event in events:
     try:
         team_home = event.find_element(By.CLASS_NAME, 'event__homeParticipant').text.strip()
@@ -66,15 +69,26 @@ for event in events:
             print(f"Error al convertir la hora '{match_hour}': {e}")
             continue
 
+        # Almacenar el partido en la lista antes de ordenarlo
+        partidos.append((home_team_id, away_team_id, match_date_int, match_hour, score_home, score_away))
+    except Exception as e:
+        print(f"Error al procesar un partido: {e}")
+
+# Ordenar los partidos por fecha antes de insertarlos en la base de datos
+partidos.sort(key=lambda x: x[2])  # Ordena por match_date_int (fecha)
+
+# Insertar los partidos ordenados en la base de datos
+for partido in partidos:
+    try:
         insert_query = """
             INSERT INTO encuentros (equipo_local_id, equipo_visitante_id, fecha, hora, resultado_local, resultado_visitante)
             VALUES (%s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_query, (home_team_id, away_team_id, match_date_int, match_hour, score_home, score_away))
+        cursor.execute(insert_query, partido)
         db_connection.commit()
         print("Partido guardado correctamente en la base de datos.")
     except Exception as e:
-        print(f"Error al procesar un partido: {e}")
+        print(f"Error al insertar partido: {e}")
 
 # Obtener todos los equipos y sus URLs
 cursor.execute("SELECT id, nombre, url_perfil FROM equipos")
