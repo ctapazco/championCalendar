@@ -60,83 +60,80 @@ championCalendar-main/
 
 ## Código relevante
 
-### Ejemplo de una ruta en `routes.php`
+### Creación de los controladores
 ```php
-require_once '../src/controllers/EquipoController.php';
-
-$router->get('/equipos', 'EquipoController@index');
-$router->post('/equipos', 'EquipoController@store');
-$router->get('/equipos/{id}', 'EquipoController@show');
-$router->put('/equipos/{id}', 'EquipoController@update');
-$router->delete('/equipos/{id}', 'EquipoController@delete');
+$equipoController = new EquipoController($pdo);
+$jugadorController = new JugadorController($pdo);
+$encuentroController = new EncuentroController($pdo);
+$usuarioController = new UsuarioController($pdo);
 ```
+Aquí se crean instancias de los controladores, pasándoles un objeto `$pdo`, que representa la conexión a la base de datos.
 
-### Ejemplo de un controlador `EquipoController.php`
+### Funciones de autenticación
+#### Verificación de sesión (para acceso web)
 ```php
-class EquipoController {
-    public function index() {
-        $equipos = Equipo::getAll();
-        echo View::render('equipos.twig', ['equipos' => $equipos]);
+function verificarSesion() {
+    if (!isset($_SESSION['usuario'])) {
+        header("Location: /usuarios/login");
+        exit;
     }
-    
-    public function store() {
-        $nombre = $_POST['nombre'];
-        Equipo::create($nombre);
-        header('Location: /equipos');
+}
+```
+Si el usuario no ha iniciado sesión, lo redirige a la página de login.
+
+#### Verificación de Token JWT (para acceso API)
+```php
+function verificarToken() {
+    $headers = getallheaders();
+    $token = $headers['Authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+
+    if (!$token || !str_starts_with($token, "Bearer ")) {
+        http_response_code(401);
+        echo json_encode(["error" => "Acceso no autorizado"]);
+        exit;
+    }
+
+    $token = str_replace("Bearer ", "", $token);
+
+    try {
+        $decoded = JWT::decode($token, new Key("Ctapasco290692", 'HS256'));
+        $_SESSION['usuario'] = (array) $decoded;
+    } catch (Exception $e) {
+        http_response_code(401);
+        echo json_encode(["error" => "Token inválido o expirado"]);
+        exit;
     }
 }
 ```
 
-### Ejemplo de modelo `Equipo.php`
+### Rutas de la API
+#### Equipos
 ```php
-class Equipo {
-    public static function getAll() {
-        $db = Database::getConnection();
-        $stmt = $db->query("SELECT * FROM equipos");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-    
-    public static function create($nombre) {
-        $db = Database::getConnection();
-        $stmt = $db->prepare("INSERT INTO equipos (nombre) VALUES (:nombre)");
-        $stmt->execute(['nombre' => $nombre]);
-    }
-}
+route('GET', '/api/equipos', fn() => $equipoController->listarEquiposApi());
+route('GET', '/api/equipos/([0-9]+)', fn($id) => $equipoController->obtenerEquipoApi($id));
+route('POST', '/api/equipos', fn() => verificarToken() && $equipoController->crearEquipoApi());
+route('PUT', '/api/equipos/([0-9]+)', fn($id) => verificarToken() && $equipoController->editarEquipoApi($id));
+route('DELETE', '/api/equipos/([0-9]+)', fn($id) => verificarToken() && $equipoController->eliminarEquipoApi($id));
 ```
+- **GET /api/equipos:** Devuelve una lista de equipos en JSON.
+- **POST /api/equipos:** Crea un equipo (requiere autenticación con JWT).
+- **PUT /api/equipos/{id}:** Modifica un equipo (requiere JWT).
+- **DELETE /api/equipos/{id}:** Elimina un equipo (requiere JWT).
 
-## Configuración y ejecución
-
-### Configuración del entorno
-Renombrar el archivo `.env.example` a `.env` y configurar las variables necesarias:
-```sh
-cp .env.example .env
+### Rutas de equipos en la web
+```php
+route('GET', '/equipos', fn() => $equipoController->listarEquiposWeb());
+route('GET', '/equipos/([0-9]+)', fn($id) => $equipoController->obtenerEquipo($id));
+route('GET', '/equipos/crear', fn() => $equipoController->mostrarFormularioCrearEquipo());
+route('POST', '/equipos/crear', fn() => $equipoController->crearEquipo());
+route('GET', '/equipos/([0-9]+)/editar', fn($id) => $equipoController->editarEquipo($id));
+route('POST', '/equipos/([0-9]+)/editar', fn($id) => $equipoController->editarEquipo($id));
+route('GET', '/equipos/([0-9]+)/eliminar', fn($id) => $equipoController->eliminarEquipo($id));
 ```
-
-Editar el archivo `.env` con los valores adecuados:
-```
-APP_ENV=local
-APP_DEBUG=true
-JWT_SECRET=your_secret_key_here
-```
-
-### Instalación de dependencias
-
-Ejecutar el siguiente comando para instalar las dependencias del proyecto:
-```sh
-composer install
-```
-
-### Ejecución del proyecto
-
-Si el servidor Apache está corriendo y el VirtualHost está configurado correctamente, puedes acceder al proyecto en tu navegador en:
-```
-http://www.championcalendar.local
-```
-
-Si deseas usar un servidor PHP embebido para pruebas, usa:
-```sh
-php -S localhost:8000 -t public/
-```
-
-Ahora puedes empezar a trabajar con Champion Calendar.
+- **listarEquiposWeb():** Lista los equipos en la web.
+- **obtenerEquipo($id):** Muestra los detalles de un equipo.
+- **mostrarFormularioCrearEquipo():** Muestra el formulario de creación.
+- **crearEquipo():** Procesa el formulario para crear un equipo.
+- **editarEquipo($id):** Permite modificar un equipo.
+- **eliminarEquipo($id):** Elimina un equipo.
 
