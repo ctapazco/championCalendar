@@ -173,3 +173,38 @@ route('GET', '/equipos/([0-9]+)/eliminar', fn($id) => $equipoController->elimina
 - **editarEquipo($id):** Permite modificar un equipo.
 - **eliminarEquipo($id):** Elimina un equipo.
 
+📌 Relación entre jugadores y equipos
+🔗 Tipo de Relación: Muchos a Uno (N:1)
+📖 Explicación:
+Cada jugador pertenece a un solo equipo. Esto se establece mediante la clave foránea equipo_id en la tabla jugadores, que referencia la columna id en la tabla equipos.
+Un equipo, en cambio, puede tener muchos jugadores asociados.
+🔢 Cardinalidad:
+Un equipo puede tener muchos jugadores (1:N).
+Un jugador pertenece a un solo equipo (N:1).
+⚙️ Implementación en SQL:
+sql
+Copiar
+Editar
+CREATE TABLE `jugadores` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(255) NOT NULL,
+  `edad` INT NOT NULL,
+  `dorsal` INT NOT NULL,
+  `minutos_jugados` INT DEFAULT '0',
+  `goles` INT DEFAULT '0',
+  `asistencias` INT DEFAULT '0',
+  `tarjetas_amarillas` INT DEFAULT '0',
+  `tarjetas_rojas` INT DEFAULT '0',
+  `equipo_id` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_dorsal` (`dorsal`,`equipo_id`),
+  KEY `equipo_id` (`equipo_id`),
+  CONSTRAINT `jugadores_ibfk_1` FOREIGN KEY (`equipo_id`) REFERENCES `equipos` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+🔍 Ejemplo de Relación:
+jugadores.id	jugadores.nombre	jugadores.equipo_id	equipos.id	equipos.nombre
+1	Lionel Messi	1	1	PSG
+2	Neymar Jr.	1	1	PSG
+3	Cristiano Ronaldo	2	2	Al-Nassr
+✅ Conclusión: Gracias a esta relación, podemos obtener la lista de jugadores de un equipo específico o conocer a qué equipo pertenece un jugador.
+
