@@ -173,18 +173,21 @@ route('GET', '/equipos/([0-9]+)/eliminar', fn($id) => $equipoController->elimina
 - **editarEquipo($id):** Permite modificar un equipo.
 - **eliminarEquipo($id):** Elimina un equipo.
 
-📌 Relación entre jugadores y equipos
-🔗 Tipo de Relación: Muchos a Uno (N:1)
-📖 Explicación:
-Cada jugador pertenece a un solo equipo. Esto se establece mediante la clave foránea equipo_id en la tabla jugadores, que referencia la columna id en la tabla equipos.
-Un equipo, en cambio, puede tener muchos jugadores asociados.
-🔢 Cardinalidad:
-Un equipo puede tener muchos jugadores (1:N).
-Un jugador pertenece a un solo equipo (N:1).
-⚙️ Implementación en SQL:
-sql
-Copiar
-Editar
+
+## Relación entre `jugadores` y `equipos`
+
+### 🔗 Tipo de Relación: **Muchos a Uno (N:1)**
+
+### 📖 Explicación:
+- Cada jugador pertenece a **un solo equipo**. Esto se establece mediante la clave foránea `equipo_id` en la tabla `jugadores`, que referencia la columna `id` en la tabla `equipos`.
+- Un equipo, en cambio, puede tener **muchos jugadores** asociados.
+
+### 🔢 **Cardinalidad:**
+- **Un equipo** puede tener **muchos jugadores** (**1:N**).
+- **Un jugador** pertenece a **un solo equipo** (**N:1**).
+
+### ⚙️ **Implementación en SQL:**
+```sql
 CREATE TABLE `jugadores` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(255) NOT NULL,
@@ -201,10 +204,25 @@ CREATE TABLE `jugadores` (
   KEY `equipo_id` (`equipo_id`),
   CONSTRAINT `jugadores_ibfk_1` FOREIGN KEY (`equipo_id`) REFERENCES `equipos` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-🔍 Ejemplo de Relación:
-jugadores.id	jugadores.nombre	jugadores.equipo_id	equipos.id	equipos.nombre
-1	Lionel Messi	1	1	PSG
-2	Neymar Jr.	1	1	PSG
-3	Cristiano Ronaldo	2	2	Al-Nassr
-✅ Conclusión: Gracias a esta relación, podemos obtener la lista de jugadores de un equipo específico o conocer a qué equipo pertenece un jugador.
+```
+
+## Relación entre `usuarios` y otras tablas
+
+### 📖 Explicación:
+Actualmente, la tabla `usuarios` no está relacionada directamente con `jugadores` o `equipos`. Sin embargo, podría implementarse una relación para:
+- Asignar un usuario como administrador de un equipo.
+- Permitir que un usuario sea un jugador registrado en la plataforma.
+
+### 📌 **Posibles mejoras en la base de datos**
+1. **Relacionar `usuarios` con `equipos`**:
+   - Agregar una tabla intermedia `usuarios_equipos` para asociar usuarios con equipos.
+2. **Permitir que los usuarios sean jugadores**:
+   - Agregar una clave foránea `usuario_id` en `jugadores` para vincular jugadores a usuarios registrados.
+3. **Registro de estadísticas históricas**:
+   - Crear una tabla `estadisticas_jugadores` para almacenar datos de cada temporada.
+4. **Sistema de roles**:
+   - Agregar un campo `rol` en `usuarios` para definir permisos (admin, jugador, espectador, etc.).
+
+Con estas mejoras, la base de datos sería más flexible y escalable para futuras funcionalidades. 🚀
+
 
